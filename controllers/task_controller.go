@@ -20,7 +20,7 @@ func CreateTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 	query := "INSERT INTO task (task_name, status, due_date) VALUES (?, ?, ?)"
-	result, err := db.GetDB().Exec(query, task.ID, task.TaskName, task.Status, task.DueDate)
+	result, err := db.GetDB().Exec(query, task.TaskName, task.Status, task.DueDate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
