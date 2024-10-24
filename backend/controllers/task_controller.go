@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	db "todolist-api/config"
-	"todolist-api/models"
+	db "todolist-api/backend/config"
+	"todolist-api/backend/models"
 
 	"github.com/gin-gonic/gin"
 )

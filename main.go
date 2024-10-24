@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	db "todolist-api/config"
-	"todolist-api/routes"
+	db "todolist-api/backend/config"
+	"todolist-api/backend/routes"
 
 	"github.com/gin-gonic/gin"
 )
