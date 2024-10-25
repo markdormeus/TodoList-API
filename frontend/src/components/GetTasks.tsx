@@ -1,6 +1,7 @@
+// src/components/GetTasks.tsx
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
-//struct needs to match the backend one
 interface Task {
   id: number;
   task_name: string;
@@ -11,30 +12,48 @@ interface Task {
 const GetTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const response = await fetch('/tasks'); // calls the backend API
-      if (response.ok) {
-        const data = await response.json();
-        setTasks(data); // gets array of tasks
-      } else {
-        console.error('Failed to fetch tasks');
-      }
-    };
+  const fetchTasks = async () => {
+    const response = await fetch('/tasks');
+    if (response.ok) {
+      const data = await response.json();
+      setTasks(data);
+    } else {
+      console.error('Failed to fetch tasks');
+    }
+  };
 
+  const handleDelete = async (id: number) => {
+    const response = await fetch(`/tasks/${id}`, {
+      method: 'DELETE',
+    });
+    if (response.ok) {
+      // Remove the deleted task from the state
+      setTasks(tasks.filter(task => task.id !== id));
+    } else {
+      console.error('Failed to delete task');
+    }
+  };
+
+  useEffect(() => {
     fetchTasks();
   }, []);
 
   return (
     <div>
-      <h2>Tasks</h2>
-      <ul>
-        {tasks.map(task => (
-          <li key={task.id}>
-            {task.task_name} - {task.status} (Due: {task.due_date})
-          </li>
+      <h2>View Tasks</h2>
+      <div className="task-grid">
+        {tasks.map((task) => (
+          <div key={task.id} className="task-card">
+            <h3>{task.task_name}</h3>
+            <p>Status: {task.status}</p>
+            <p>Due Date: {task.due_date}</p>
+            <Link to={`/update/${task.id}`}>Edit</Link>
+            <button onClick={() => handleDelete(task.id)} className="delete-button">
+              Delete
+            </button>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
