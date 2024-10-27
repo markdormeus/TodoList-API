@@ -4,14 +4,15 @@ import '../stylesheets/CreateTask.css';
 const CreateTask: React.FC = () => {
   // State for task inputs
   const [task_name, setTaskName] = useState<string>('');
-  const [status, setStatus] = useState<string>('pending');
+  const [description, setDescription] = useState<string>('');
+  const [status, setStatus] = useState<boolean>(false);
   const [due_date, setDueDate] = useState<string>('');
 
   // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    const newTask = { task_name, status, due_date };
+    const newTask = { task_name, status, description, due_date };
 
     const response = await fetch('/tasks', {
       method: 'POST',
@@ -24,7 +25,8 @@ const CreateTask: React.FC = () => {
     if (response.ok) {
       // Clear the form fields
       setTaskName('');
-      setStatus('pending');
+      setDescription('');
+      setStatus(false);
       setDueDate('');
       console.log('Task created successfully');
     } else {
@@ -53,15 +55,14 @@ const CreateTask: React.FC = () => {
           />
         </div>
         <div>
-          <label htmlFor="status">Status:</label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-          </select>
+          <label htmlFor="taskName">Description:</label>
+          <input
+            type="text"
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label htmlFor="dueDate">Due Date:</label>

@@ -5,9 +5,17 @@ import { Link } from 'react-router-dom';
 interface Task {
   id: number;
   task_name: string;
+  description: string,
   status: string;
   due_date: string;
 }
+
+interface User {
+  id: number;
+  username: string;
+  password: string;
+}
+
 
 const GetTasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -45,9 +53,10 @@ const GetTasks: React.FC = () => {
         {tasks.map((task) => (
           <div key={task.id} className="task-card">
             <h3>{task.task_name}</h3>
+            <p>Description: {task.description}</p>
             <p>Status: {task.status}</p>
             <p>Due Date: {task.due_date}</p>
-            <Link to={`/update/${task.id}`}>Edit</Link>
+            <Link to={`/update/${task.id}`} className='edit-button'>Edit</Link>
             <button onClick={() => handleDelete(task.id)} className="delete-button">
               Delete
             </button>

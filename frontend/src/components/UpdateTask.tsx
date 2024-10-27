@@ -6,7 +6,8 @@ const UpdateTask: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [task_name, setTaskName] = useState<string>('');
-  const [status, setStatus] = useState<string>('pending');
+  const [description, setDescription] = useState<string>('');
+  const [status, setStatus] = useState<boolean>(false);
   const [due_date, setDueDate] = useState<string>('');
 
   // Fetch the task details from the backend
@@ -15,6 +16,7 @@ const UpdateTask: React.FC = () => {
     if (response.ok) {
       const task = await response.json();
       setTaskName(task.task_name);
+      setDescription(task.description);
       setStatus(task.status);
       setDueDate(task.due_date);
     } else {
@@ -29,7 +31,7 @@ const UpdateTask: React.FC = () => {
   // Handle task update
   const handleUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
-    const updatedTask = { task_name, status, due_date };
+    const updatedTask = { task_name, status, description, due_date };
 
     const response = await fetch(`/tasks/${id}`, {
       method: 'PUT',
@@ -79,12 +81,21 @@ const UpdateTask: React.FC = () => {
           <label htmlFor="status">Status:</label>
           <select
             id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            value={status ? 'completed' : 'pending'}
+            onChange={(e) => setStatus(e.target.value === 'completed')}
           >
             <option value="pending">Pending</option>
             <option value="completed">Completed</option>
           </select>
+        </div>
+        <div>
+          <label htmlFor="description">Description:</label>
+          <input
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            />
         </div>
         <div>
           <label htmlFor="dueDate">Due Date:</label>
