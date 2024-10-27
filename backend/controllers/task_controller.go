@@ -19,8 +19,8 @@ func CreateTask(c *gin.Context) {
 	if err := c.BindJSON(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
-	query := "INSERT INTO task (task_name, status, due_date) VALUES (?, ?, ?)"
-	result, err := db.GetDB().Exec(query, task.TaskName, task.Status, task.DueDate)
+	query := "INSERT INTO task (task_name, status, description, due_date) VALUES (?, ?, ?, ?)"
+	result, err := db.GetDB().Exec(query, task.TaskName, task.Status, task.Description, task.DueDate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -48,7 +48,7 @@ func GetTasks(c *gin.Context) {
 	// Loop through rows, using Scan to assign column data to struct fields.
 	for rows.Next() {
 		var tas models.Task
-		if err := rows.Scan(&tas.ID, &tas.TaskName, &tas.Status, &tas.DueDate); err != nil {
+		if err := rows.Scan(&tas.ID, &tas.TaskName, &tas.Status, &tas.Description, &tas.DueDate); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan task."})
 			return
 		}
@@ -68,7 +68,7 @@ func GetTaskByID(c *gin.Context) {
 	var task models.Task
 	query := "SELECT * FROM task WHERE id = ?"
 	row := db.GetDB().QueryRow(query, id)
-	if err := row.Scan(&task.ID, &task.TaskName, &task.Status, &task.DueDate); err != nil {
+	if err := row.Scan(&task.ID, &task.TaskName, &task.Status, &task.Description, &task.DueDate); err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("No task found with ID: %s", id)})
 			return
@@ -84,23 +84,31 @@ func GetTaskByID(c *gin.Context) {
 func UpdateTask(c *gin.Context) {
 	id := c.Param("id")
 	var task models.Task
-	query := "UPDATE task SET task_name = ?, status = ?, due_date = ? WHERE id = ?"
-	result, err := db.GetDB().Exec(query, id, task.TaskName, task.Status, task.DueDate)
-	if err != nil {
+
+	// Bind JSON from request body to the task struct
+	if err := c.ShouldBindJSON(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// get the number of rows affected by the UPDATE operation.
-	rowsAffected, err := result.RowsAffected()
+	query := "UPDATE task SET task_name = ?, status = ?, description = ?, due_date = ? WHERE id = ?"
+	result, err := db.GetDB().Exec(query, task.TaskName, task.Status, task.Description, task.DueDate, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update task: %v", err)})
+		return
+	}
+
+	// Get the number of rows affected by the UPDATE operation
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve affected rows: %v", err)})
 		return
 	}
 	if rowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "No task found with the given ID"})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Task updated successfully", "rowsAffected": rowsAffected})
 }
 
