@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import GetTasks from './components/GetTasks';
@@ -12,8 +11,15 @@ import './App.css';
 interface Task {
   id: number;
   task_name: string;
-  status: string;
+  status: boolean;
+  description: string;
   due_date: string;
+}
+
+interface User {
+  id: number;
+  username: string;
+  password: string;
 }
 
 const App: React.FC = () => {
@@ -30,24 +36,32 @@ const App: React.FC = () => {
     }
   };
 
+  const updateTaskStatus = async (id: number, status: boolean) => {
+    const response = await fetch(`/tasks/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) {
+      console.error('Failed to update task status');
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  // Function to change the current week
   const changeWeek = (delta: number) => {
     const newDate = new Date(currentWeek);
     newDate.setDate(newDate.getDate() + delta * 7);
     setCurrentWeek(newDate);
   };
 
-  // Prepare events for the calendar based on the tasks
   const events = tasks.map(task => ({
     title: task.task_name,
     date: task.due_date,
   }));
 
-  // Calculate progress percentage for the current week
   const calculateProgress = () => {
     const startOfWeek = new Date(currentWeek);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
@@ -60,17 +74,14 @@ const App: React.FC = () => {
       return taskDate >= startOfWeek && taskDate <= endOfWeek;
     });
 
-    const completedTasks = tasksThisWeek.filter(task => task.status === 'completed');
-    const progress = tasksThisWeek.length > 0 
+    const completedTasks = tasksThisWeek.filter(task => task.status);
+    return tasksThisWeek.length > 0 
       ? (completedTasks.length / tasksThisWeek.length) * 100 
       : 0;
-
-    return progress;
   };
 
   const progress = calculateProgress();
 
-  // Get the display string for the current week
   const getCurrentWeekDisplay = () => {
     const startOfWeek = new Date(currentWeek);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
@@ -80,10 +91,26 @@ const App: React.FC = () => {
     return `${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}`;
   };
 
+  const handleCheckboxChange = async (task: Task) => {
+    const newStatus = !task.status; //toggle
+    await updateTaskStatus(task.id, newStatus);
+    setTasks((prevTasks) =>
+      prevTasks.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
+    );
+  };
+
+  const tasksThisWeek = tasks.filter((task) => {
+    const taskDate = new Date(task.due_date);
+    const startOfWeek = new Date(currentWeek);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    const endOfWeek = new Date(currentWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+    return taskDate >= startOfWeek && taskDate <= endOfWeek;
+  });
+
   return (
     <Router>
       <div className="app-container">
-        {/* Left Sidebar for Task Manager */}
         <nav className="sidebar">
           <h1>Task Manager</h1>
           <ul>
@@ -99,7 +126,6 @@ const App: React.FC = () => {
           </ul>
         </nav>
         
-        {/* Main Content Area */}
         <main className="main-content">
           <Routes>
             <Route
@@ -126,7 +152,6 @@ const App: React.FC = () => {
           </Routes>
         </main>
 
-        {/* Right Sidebar for Task Completion Progress */}
         <aside className="task-list">
           <h2>Task Completion Progress</h2>
           <p>Current Week: {getCurrentWeekDisplay()}</p>
@@ -136,6 +161,24 @@ const App: React.FC = () => {
             <button onClick={() => changeWeek(1)}>Next Week</button>
           </div>
           <p style={{ marginTop: '10px' }}>Progress: {progress.toFixed(2)}%</p>
+
+          <div className="weekly-tasks">
+            <h3>This Week's Tasks</h3>
+            <ul>
+              {tasksThisWeek.map((task) => (
+                <li key={task.id}>
+                  <label className={task.status ? 'completed' : ''}>
+                    <input
+                      type="checkbox"
+                      checked={task.status}
+                      onChange={() => handleCheckboxChange(task)}
+                    />
+                    {task.task_name}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
         </aside>
       </div>
     </Router>
